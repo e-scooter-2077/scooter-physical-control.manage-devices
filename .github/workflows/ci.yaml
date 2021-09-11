@@ -2,8 +2,8 @@ name: "Build"
 
 env:
   OUTPUT_DIR: publish
-  RELEASE_PREFIX: Azure Function Template
-  AZURE_FUNCTIONAPP_NAME: your-azure-app-name
+  RELEASE_PREFIX: Manage Devices
+  AZURE_FUNCTIONAPP_NAME: scooter-physical-contro-manage-devices
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
 
