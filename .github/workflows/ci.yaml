@@ -1,0 +1,134 @@
+name: "Build"
+
+env:
+  OUTPUT_DIR: publish
+  RELEASE_PREFIX: Azure Function Template
+  AZURE_FUNCTIONAPP_NAME: your-azure-app-name
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+
+on:
+  push:
+    branches:
+      - "**"
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.gitignore'
+      - '**/*.gitattributes'
+    tags:
+      - "*"
+  workflow_dispatch:
+    branches:
+      - master
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.gitignore'
+      - '**/*.gitattributes'
+      
+jobs:
+  release-checks:
+    name: Pre-release Checks
+    runs-on: ubuntu-20.04
+    outputs:
+      should-release: ${{ steps.release-info.outputs.should-release }}
+      is-prerelease: ${{ steps.release-info.outputs.is-prerelease }}
+      version: ${{ steps.release-info.outputs.version }}
+    steps:
+      - id: get-version
+        name: Get semantic version
+        uses: battila7/get-version-action@v2
+      - id: release-info
+        name: Get release info
+        run: |
+          SHOULD_RELEASE=${{ startsWith(github.ref, 'refs/tags/v') && steps.get-version.outputs.is-semver }}
+          PRERELEASE=${{ steps.get-version.outputs.prerelease != '' || startsWith(steps.get-version.outputs.version-without-v, '0.') }}
+          if [ "${SHOULD_RELEASE}" == "true" ]; then
+            ADAPTED_VERSION=${{ steps.get-version.outputs.version-without-v }}
+          else
+            ADAPTED_VERSION=0.0.0
+          fi
+          echo "::set-output name=should-release::${SHOULD_RELEASE}"
+          echo "::set-output name=is-prerelease::${PRERELEASE}"
+          echo "::set-output name=version::${ADAPTED_VERSION}"
+
+
+  build:
+    name: Build and Test
+    runs-on: ubuntu-20.04
+    needs: [release-checks]
+    env:
+      BUILD_CONFIGURATION: Release
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Setup .NET Core SDK v3
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.x
+    - name: Setup .NET Core SDK v5.0
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.x
+    - name: Cache nuget packages
+      uses: actions/cache@v2
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget
+    - name: Install dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore -c "${{ env.BUILD_CONFIGURATION }}" --output "${{ env.OUTPUT_DIR }}"
+    - name: Run unit tests
+      run: dotnet test --no-build -c "${{ env.BUILD_CONFIGURATION }}" --output "${{ env.OUTPUT_DIR }}"
+    - name: Upload artifacts
+      if: ${{ needs.release-checks.outputs.should-release == 'true' }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ env.RELEASE_PREFIX }} Artifacts
+        path: "${{ env.OUTPUT_DIR }}"
+        
+
+  release:
+    if: ${{ needs.release-checks.outputs.should-release == 'true' }}
+    name: Release
+    environment: release
+    concurrency: release
+    needs: [release-checks, build]
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # All history
+      - name: GitHub Release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: ${{ needs.release-checks.outputs.is-prerelease }}
+          files: |
+            LICENSE
+          title: "${{ env.RELEASE_PREFIX }} ${{ needs.release-checks.outputs.version }}"
+          draft: false
+      - name: Setup .NET Core SDK v3
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 3.x
+      - name: Setup .NET Core SDK v5.0
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.0.x
+      - name: Download Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.RELEASE_PREFIX }} Artifacts
+          path: "${{ env.OUTPUT_DIR }}"
+      - name: Deploy Function on Azure
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: "${{ env.OUTPUT_DIR }}"
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+    
