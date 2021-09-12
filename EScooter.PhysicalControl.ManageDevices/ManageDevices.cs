@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 namespace EScooter.PhysicalControl.ManageDevices
 {
     public record ScooterCreated(Guid Id);
+    public record ScooterDeleted(Guid Id);
 
     /// <summary>
     /// A function that adds a device to the IoTHub when the event is received.
@@ -24,7 +25,7 @@ namespace EScooter.PhysicalControl.ManageDevices
         /// <param name="context">The function execution context.</param>
         /// <returns>An empty task.</returns>
         [Function("add-to-iot-hub")]
-        public static async Task Run([ServiceBusTrigger("dev~service-events", "add-to-iot-hub-function", Connection = "ServiceBusConnectionString")] string mySbMsg, FunctionContext context)
+        public static async Task AddDevice([ServiceBusTrigger("dev~service-events", "add-to-iot-hub-function", Connection = "ServiceBusConnectionString")] string mySbMsg, FunctionContext context)
         {
             var logger = context.GetLogger("Function");
             string connectionString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
@@ -41,6 +42,34 @@ namespace EScooter.PhysicalControl.ManageDevices
                 logger.LogInformation($"New device registered with id {device.Id}");
                 var twin = await SetDefaultProperties(message.Id, registryManager);
                 logger.LogInformation($"Update device twin: ${twin.ToJson()}");
+            }
+        }
+
+        /// <summary>
+        /// When triggered, removes the device with the given Id from the IoT Hub.
+        /// If there is no device corresponding to that Id it does nothing.
+        /// </summary>
+        /// <param name="mySbMsg">The message received with the event.</param>
+        /// <param name="context">The function execution context.</param>
+        /// <returns>An empty task.</returns>
+        [Function("remove-from-iot-hub")]
+        public static async Task DeleteDevice([ServiceBusTrigger("dev~service-events", "remove-from-iot-hub-function", Connection = "ServiceBusConnectionString")] string mySbMsg, FunctionContext context)
+        {
+            var logger = context.GetLogger("Function");
+            string connectionString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
+            var registryManager = RegistryManager.CreateFromConnectionString(connectionString);
+
+            var message = JsonConvert.DeserializeObject<ScooterCreated>(mySbMsg);
+            var id = message.Id.ToString();
+            try
+            {
+                await registryManager.RemoveDeviceAsync(id);
+                logger.LogInformation($"Device with id {id} was removed");
+
+            }
+            catch (DeviceNotFoundException)
+            {
+                logger.LogInformation($"Device with id {id} not found");
             }
         }
 
