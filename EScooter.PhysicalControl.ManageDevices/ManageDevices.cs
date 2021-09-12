@@ -25,7 +25,7 @@ namespace EScooter.PhysicalControl.ManageDevices
         /// <param name="context">The function execution context.</param>
         /// <returns>An empty task.</returns>
         [Function("add-to-iot-hub")]
-        public static async Task AddDevice([ServiceBusTrigger("dev~service-events", "add-to-iot-hub-function", Connection = "ServiceBusConnectionString")] string mySbMsg, FunctionContext context)
+        public static async Task AddDevice([ServiceBusTrigger("%TopicName%", "%AddSubscription%", Connection = "ServiceBusConnectionString")] string mySbMsg, FunctionContext context)
         {
             var logger = context.GetLogger("Function");
             string connectionString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
@@ -53,7 +53,7 @@ namespace EScooter.PhysicalControl.ManageDevices
         /// <param name="context">The function execution context.</param>
         /// <returns>An empty task.</returns>
         [Function("remove-from-iot-hub")]
-        public static async Task DeleteDevice([ServiceBusTrigger("dev~service-events", "remove-from-iot-hub-function", Connection = "ServiceBusConnectionString")] string mySbMsg, FunctionContext context)
+        public static async Task RemoveDevice([ServiceBusTrigger("%TopicName%", "%RemoveSubscription%", Connection = "ServiceBusConnectionString")] string mySbMsg, FunctionContext context)
         {
             var logger = context.GetLogger("Function");
             string connectionString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
