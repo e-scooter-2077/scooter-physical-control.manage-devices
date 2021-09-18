@@ -97,6 +97,9 @@ namespace EScooter.PhysicalControl.ManageDevices
             // TODO: change this when we know how
             var patch =
                 @"{
+                    tags: {
+                        type: 'EScooter'
+                    }
                     properties: {
                         desired: {
                             updateFrequency: '5m',
