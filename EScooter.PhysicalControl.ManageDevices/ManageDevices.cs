@@ -3,12 +3,14 @@ using System.Threading.Tasks;
 using Microsoft.Azure.Devices;
 using Microsoft.Azure.Devices.Common.Exceptions;
 using Microsoft.Azure.Devices.Shared;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace EScooter.PhysicalControl.ManageDevices
 {
     public record ScooterCreated(Guid Id);
+
     public record ScooterDeleted(Guid Id);
 
     /// <summary>
@@ -64,7 +66,6 @@ namespace EScooter.PhysicalControl.ManageDevices
             {
                 await registryManager.RemoveDeviceAsync(id);
                 logger.LogInformation($"Device with id {id} was removed");
-
             }
             catch (DeviceNotFoundException)
             {
@@ -72,7 +73,7 @@ namespace EScooter.PhysicalControl.ManageDevices
             }
         }
 
-        private static async Task<(Device, bool)> AddOrGetDeviceAsync(Guid id, RegistryManager registryManager)
+        private static async Task<(Device Device, bool Exists)> AddOrGetDeviceAsync(Guid id, RegistryManager registryManager)
         {
             Device device;
             bool exists = false;
