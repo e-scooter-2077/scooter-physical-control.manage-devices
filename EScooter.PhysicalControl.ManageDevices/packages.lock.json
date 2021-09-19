@@ -50,9 +50,12 @@
       },
       "StyleCop.Analyzers": {
         "type": "Direct",
-        "requested": "[1.1.118, )",
-        "resolved": "1.1.118",
-        "contentHash": "Onx6ovGSqXSK07n/0eM3ZusiNdB6cIlJdabQhWGgJp3Vooy9AaLS/tigeybOJAobqbtggTamoWndz72JscZBvw=="
+        "requested": "[1.2.0-beta.261, )",
+        "resolved": "1.2.0-beta.261",
+        "contentHash": "C0bMvkB95HkX2LNsKO9KbVM+BMzkHjRXxdxQ7rogiy8gtwy2yAaPNFY1+98DzlN8XUpJ/39oGX6Da7qnMp2FeA==",
+        "dependencies": {
+          "StyleCop.Analyzers.Unstable": "1.2.0.261"
+        }
       },
       "Azure.Core": {
         "type": "Transitive",
@@ -509,6 +512,11 @@
           "Microsoft.NETCore.Platforms": "1.0.1",
           "Microsoft.NETCore.Targets": "1.0.1"
         }
+      },
+      "StyleCop.Analyzers.Unstable": {
+        "type": "Transitive",
+        "resolved": "1.2.0.261",
+        "contentHash": "FpInVJVmFyWIRz4oIpPpLuOkW3oFhfU4CcT7bkeZlN+iwG1T37hGVZFQ8bA2fsJv5vAHOlqLpvk7HyU3q6tF2w=="
       },
       "System.Buffers": {
         "type": "Transitive",

@@ -2,8 +2,8 @@ name: Continuous Integration
 
 env:
   OUTPUT_DIR: publish
-  RELEASE_PREFIX: Azure Function Template
-  AZURE_FUNCTIONAPP_NAME: ''
+  RELEASE_PREFIX: Manage Devices Functions
+  AZURE_FUNCTIONAPP_NAME: 'scooter-physical-control-manage-devices'
 
 on:
   workflow_dispatch:
