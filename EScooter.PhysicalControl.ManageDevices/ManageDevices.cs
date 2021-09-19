@@ -24,7 +24,7 @@ namespace EScooter.PhysicalControl.ManageDevices
         /// <param name="mySbMsg">The message received with the event.</param>
         /// <param name="context">The function execution context.</param>
         /// <returns>An empty task.</returns>
-        [Function("add-to-iot-hub")]
+        [Function("add-device-and-twin")]
         public static async Task AddDevice([ServiceBusTrigger("%TopicName%", "%AddSubscription%", Connection = "ServiceBusConnectionString")] string mySbMsg, FunctionContext context)
         {
             var logger = context.GetLogger("Function");
@@ -52,7 +52,7 @@ namespace EScooter.PhysicalControl.ManageDevices
         /// <param name="mySbMsg">The message received with the event.</param>
         /// <param name="context">The function execution context.</param>
         /// <returns>An empty task.</returns>
-        [Function("remove-from-iot-hub")]
+        [Function("remove-device-and-twin")]
         public static async Task RemoveDevice([ServiceBusTrigger("%TopicName%", "%RemoveSubscription%", Connection = "ServiceBusConnectionString")] string mySbMsg, FunctionContext context)
         {
             var logger = context.GetLogger("Function");
