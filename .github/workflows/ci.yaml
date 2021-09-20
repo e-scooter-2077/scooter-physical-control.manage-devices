@@ -60,7 +60,7 @@ jobs:
         with:
           name: build-artifacts
       - name: Zip build assets
-        run: zip -r assets ${{ env.OUTPUT_DIR }}/*
+        run: zip -r assets ./*
       - name: Release
         uses: EasyDesk/action-semver-release@v1
         with:
