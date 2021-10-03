@@ -80,7 +80,7 @@ namespace EScooter.PhysicalControl.ManageDevices
             var registryManager = RegistryManager.CreateFromConnectionString(connectionString);
 
             string digitalTwinUrl = "https://" + Environment.GetEnvironmentVariable("AzureDTHostname");
-            var credential = new DefaultAzureCredential();
+            var credential = new ManagedIdentityCredential("https://digitaltwins.azure.net");
             var digitalTwinsClient = new DigitalTwinsClient(new Uri(digitalTwinUrl), credential);
 
             var message = JsonConvert.DeserializeObject<ScooterCreated>(mySbMsg);
