@@ -1,5 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using Azure;
+using Azure.DigitalTwins.Core;
+using Azure.Identity;
 using Microsoft.Azure.Devices;
 using Microsoft.Azure.Devices.Common.Exceptions;
 using Microsoft.Azure.Devices.Shared;
@@ -29,11 +32,27 @@ namespace EScooter.PhysicalControl.ManageDevices
         public static async Task AddDevice([ServiceBusTrigger("%TopicName%", "%AddSubscription%", Connection = "ServiceBusConnectionString")] string mySbMsg, FunctionContext context)
         {
             var logger = context.GetLogger("Function");
-            string connectionString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
-            var registryManager = RegistryManager.CreateFromConnectionString(connectionString);
+            string iotHubString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
+            var registryManager = RegistryManager.CreateFromConnectionString(iotHubString);
+
+            string digitalTwinUrl = "https://" + Environment.GetEnvironmentVariable("AzureDTHostname");
+            var credential = new DefaultAzureCredential();
+            var digitalTwinsClient = new DigitalTwinsClient(new Uri(digitalTwinUrl), credential);
 
             var message = JsonConvert.DeserializeObject<ScooterCreated>(mySbMsg);
-            var (device, exists) = await AddOrGetDeviceAsync(message.Id, registryManager);
+
+            // Add Digital Twin first
+            try
+            {
+                await DTUtils.AddDigitalTwin(message.Id, digitalTwinsClient);
+            }
+            catch (RequestFailedException e)
+            {
+                logger.LogError($"Create twin error: {e.Status}: {e.Message}");
+            }
+
+            // Then add IoTHub Device
+            var (device, exists) = await IoTHubUtils.AddOrGetDeviceAsync(message.Id, registryManager);
             if (exists)
             {
                 logger.LogInformation($"Device with id {device.Id} already existing");
@@ -41,8 +60,8 @@ namespace EScooter.PhysicalControl.ManageDevices
             else
             {
                 logger.LogInformation($"New device registered with id {device.Id}");
-                var twin = await SetDefaultProperties(message.Id, registryManager);
-                logger.LogInformation($"Update device twin: ${twin.ToJson()}");
+                var twin = await IoTHubUtils.SetDefaultProperties(message.Id, registryManager);
+                logger.LogInformation($"Update device twin default properties");
             }
         }
 
@@ -60,20 +79,27 @@ namespace EScooter.PhysicalControl.ManageDevices
             string connectionString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
             var registryManager = RegistryManager.CreateFromConnectionString(connectionString);
 
+            string digitalTwinUrl = "https://" + Environment.GetEnvironmentVariable("AzureDTHostname");
+            var credential = new DefaultAzureCredential();
+            var digitalTwinsClient = new DigitalTwinsClient(new Uri(digitalTwinUrl), credential);
+
             var message = JsonConvert.DeserializeObject<ScooterCreated>(mySbMsg);
-            var id = message.Id.ToString();
+            await DTUtils.RemoveDigitalTwin(message.Id, digitalTwinsClient);
             try
             {
-                await registryManager.RemoveDeviceAsync(id);
-                logger.LogInformation($"Device with id {id} was removed");
+                await IoTHubUtils.RemoveDevice(message.Id, registryManager);
+                logger.LogInformation($"Device with id {message.Id} was removed");
             }
             catch (DeviceNotFoundException)
             {
-                logger.LogInformation($"Device with id {id} not found");
+                logger.LogInformation($"Device with id {message.Id} not found");
             }
         }
+    }
 
-        private static async Task<(Device Device, bool Exists)> AddOrGetDeviceAsync(Guid id, RegistryManager registryManager)
+    internal static class IoTHubUtils
+    {
+        public static async Task<(Device Device, bool Exists)> AddOrGetDeviceAsync(Guid id, RegistryManager registryManager)
         {
             Device device;
             bool exists = false;
@@ -90,7 +116,12 @@ namespace EScooter.PhysicalControl.ManageDevices
             return (device, exists);
         }
 
-        private static async Task<Twin> SetDefaultProperties(Guid id, RegistryManager registryManager)
+        public static async Task RemoveDevice(Guid id, RegistryManager registryManager)
+        {
+            await registryManager.RemoveDeviceAsync(id.ToString());
+        }
+
+        public static async Task<Twin> SetDefaultProperties(Guid id, RegistryManager registryManager)
         {
             var twin = await registryManager.GetTwinAsync(id.ToString());
             var patch =
@@ -108,6 +139,22 @@ namespace EScooter.PhysicalControl.ManageDevices
                     }
                 }";
             return await registryManager.UpdateTwinAsync(twin.DeviceId, patch, twin.ETag);
+        }
+    }
+
+    internal static class DTUtils
+    {
+        public static async Task AddDigitalTwin(Guid id, DigitalTwinsClient digitalTwinsClient)
+        {
+            var twinData = new BasicDigitalTwin(); // TODO: Change this to a ScooterDigitalTwin object with default props already set.
+            twinData.Id = id.ToString();
+            twinData.Metadata.ModelId = "dtmi:com:escooter:EScooter;1";
+            await digitalTwinsClient.CreateOrReplaceDigitalTwinAsync(twinData.Id, twinData);
+        }
+
+        public static async Task RemoveDigitalTwin(Guid id, DigitalTwinsClient digitalTwinsClient)
+        {
+            await digitalTwinsClient.DeleteDigitalTwinAsync(id.ToString());
         }
     }
 }
