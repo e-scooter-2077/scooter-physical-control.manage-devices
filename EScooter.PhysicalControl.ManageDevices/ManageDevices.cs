@@ -93,13 +93,11 @@ namespace EScooter.PhysicalControl.ManageDevices
         private static async Task<Twin> SetDefaultProperties(Guid id, RegistryManager registryManager)
         {
             var twin = await registryManager.GetTwinAsync(id.ToString());
-
-            // TODO: change this when we know how
             var patch =
                 @"{
                     tags: {
                         type: 'EScooter'
-                    }
+                    },
                     properties: {
                         desired: {
                             updateFrequency: '00:00:30',
