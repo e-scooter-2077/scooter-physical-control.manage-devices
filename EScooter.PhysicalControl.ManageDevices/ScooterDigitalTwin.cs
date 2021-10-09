@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace EScooter.PhysicalControl.ManageDevices
+namespace EScooter.DigitalTwins.Commons
 {
     internal class ScooterDigitalTwin
     {

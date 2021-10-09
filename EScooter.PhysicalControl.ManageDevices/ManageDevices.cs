@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Azure;
 using Azure.DigitalTwins.Core;
 using Azure.Identity;
+using EScooter.DigitalTwins.Commons;
 using Microsoft.Azure.Devices;
 using Microsoft.Azure.Devices.Common.Exceptions;
 using Microsoft.Azure.Devices.Shared;
@@ -80,7 +81,7 @@ namespace EScooter.PhysicalControl.ManageDevices
             var registryManager = RegistryManager.CreateFromConnectionString(connectionString);
 
             string digitalTwinUrl = "https://" + Environment.GetEnvironmentVariable("AzureDTHostname");
-            var credential = new ManagedIdentityCredential("https://digitaltwins.azure.net");
+            var credential = new DefaultAzureCredential();
             var digitalTwinsClient = new DigitalTwinsClient(new Uri(digitalTwinUrl), credential);
 
             var message = JsonConvert.DeserializeObject<ScooterCreated>(mySbMsg);
