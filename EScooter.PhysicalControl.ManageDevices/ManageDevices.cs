@@ -146,7 +146,7 @@ namespace EScooter.PhysicalControl.ManageDevices
     {
         public static async Task AddDigitalTwin(Guid id, DigitalTwinsClient digitalTwinsClient)
         {
-            var twinData = ScooterDigitalTwin.CreateWithDefaults();
+            var twinData = new ScooterDigitalTwin();
             twinData.Id = id.ToString();
             twinData.Metadata.ModelId = "dtmi:com:escooter:EScooter;1";
             await digitalTwinsClient.CreateOrReplaceDigitalTwinAsync(twinData.Id, twinData);
