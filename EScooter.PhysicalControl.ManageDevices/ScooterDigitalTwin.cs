@@ -37,6 +37,9 @@ namespace EScooter.PhysicalControl.ManageDevices
         [JsonPropertyName("Standby")]
         public bool Standby { get; set; }
 
+        [JsonPropertyName("Standby")]
+        public bool Connected { get; set; }
+
         [JsonPropertyName("BatteryLevel")]
         public double BatteryLevel { get; set; }
 
@@ -51,6 +54,11 @@ namespace EScooter.PhysicalControl.ManageDevices
 
         [JsonPropertyName("Acceleration")]
         public double Acceleration { get; set; }
+
+        public ScooterDigitalTwin()
+        {
+            this.Connected = false;
+        }
     }
 
     internal class ScooterDigitalTwinMetadata
