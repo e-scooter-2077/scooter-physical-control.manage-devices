@@ -31,9 +31,6 @@ namespace EScooter.DigitalTwins.Commons
         [JsonPropertyName("MaxSpeed")]
         public double MaxSpeed { get; set; }
 
-        [JsonPropertyName("PowerSavingThreshold")]
-        public double PowerSavingThreshold { get; set; }
-
         [JsonPropertyName("Standby")]
         public bool Standby { get; set; }
 
@@ -51,9 +48,6 @@ namespace EScooter.DigitalTwins.Commons
 
         [JsonPropertyName("Speed")]
         public double Speed { get; set; }
-
-        [JsonPropertyName("Acceleration")]
-        public double Acceleration { get; set; }
 
         public ScooterDigitalTwin()
         {
