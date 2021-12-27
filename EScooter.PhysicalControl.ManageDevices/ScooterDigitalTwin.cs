@@ -51,14 +51,14 @@ namespace EScooter.DigitalTwins.Commons
 
         public ScooterDigitalTwin()
         {
-            this.Connected = false;
-            this.Locked = true;
-            this.BatteryLevel = 0;
-            this.Enabled = false;
-            this.Standby = true;
-            this.UpdateFrequency = 30;
-            this.MaxSpeed = 25;
-            this.Metadata = new ScooterDigitalTwinMetadata();
+            Connected = false;
+            Locked = true;
+            BatteryLevel = 0;
+            Enabled = false;
+            Standby = true;
+            UpdateFrequency = 30;
+            MaxSpeed = 25;
+            Metadata = new ScooterDigitalTwinMetadata();
         }
     }
 
