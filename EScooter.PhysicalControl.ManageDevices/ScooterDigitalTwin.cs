@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace EScooter.DigitalTwins.Commons
 {
-    internal class ScooterDigitalTwin
+    public class ScooterDigitalTwin
     {
         [JsonPropertyName(DigitalTwinsJsonPropertyNames.DigitalTwinId)]
         public string Id { get; set; }
@@ -52,11 +52,17 @@ namespace EScooter.DigitalTwins.Commons
         public ScooterDigitalTwin()
         {
             this.Connected = false;
+            this.Locked = true;
+            this.BatteryLevel = 0;
+            this.Enabled = false;
+            this.Standby = true;
+            this.UpdateFrequency = 30;
+            this.MaxSpeed = 25;
             this.Metadata = new ScooterDigitalTwinMetadata();
         }
     }
 
-    internal class ScooterDigitalTwinMetadata
+    public class ScooterDigitalTwinMetadata
     {
         [JsonPropertyName(DigitalTwinsJsonPropertyNames.MetadataModel)]
         public string ModelId { get; set; }

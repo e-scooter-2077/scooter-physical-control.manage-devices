@@ -133,9 +133,7 @@ namespace EScooter.PhysicalControl.ManageDevices
                     properties: {
                         desired: {
                             updateFrequency: '00:00:30',
-                            maxSpeed: 25,
-                            powerSavingThreshold: 50,
-                            standbyThreshold: 10
+                            maxSpeed: 7
                         }
                     }
                 }";
