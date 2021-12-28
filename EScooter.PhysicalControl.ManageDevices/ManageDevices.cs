@@ -129,12 +129,6 @@ namespace EScooter.PhysicalControl.ManageDevices
                 @"{
                     tags: {
                         type: 'EScooter'
-                    },
-                    properties: {
-                        desired: {
-                            updateFrequency: '00:00:30',
-                            maxSpeed: 7
-                        }
                     }
                 }";
             return await registryManager.UpdateTwinAsync(twin.DeviceId, patch, twin.ETag);

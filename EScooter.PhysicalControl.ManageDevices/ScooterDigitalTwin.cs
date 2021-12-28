@@ -57,7 +57,7 @@ namespace EScooter.DigitalTwins.Commons
             Enabled = false;
             Standby = true;
             UpdateFrequency = 30;
-            MaxSpeed = 25;
+            MaxSpeed = 30;
             Metadata = new ScooterDigitalTwinMetadata();
         }
     }
