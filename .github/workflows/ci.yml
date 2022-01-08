@@ -1,11 +1,5 @@
 name: Continuous Integration
 
-env:
-  OUTPUT_DIR: publish
-  RELEASE_PREFIX: Manage Devices Functions
-  AZURE_FUNCTIONAPP_NAME: 'scooter-physical-control-manage-devices'
-  PROJECT_NAME: 'EScooter.PhysicalControl.ManageDevices'
-
 on:
   workflow_dispatch:
   push:
