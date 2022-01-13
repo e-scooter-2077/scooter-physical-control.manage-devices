@@ -11,46 +11,47 @@ namespace EScooter.DigitalTwins.Commons
     public class ScooterDigitalTwin
     {
         [JsonPropertyName(DigitalTwinsJsonPropertyNames.DigitalTwinId)]
-        public string Id { get; set; }
+        public string Id { get; }
 
         [JsonPropertyName(DigitalTwinsJsonPropertyNames.DigitalTwinETag)]
-        public string ETag { get; set; }
+        public string ETag { get; }
 
         [JsonPropertyName(DigitalTwinsJsonPropertyNames.DigitalTwinMetadata)]
-        public ScooterDigitalTwinMetadata Metadata { get; set; }
+        public ScooterDigitalTwinMetadata Metadata { get; }
 
         [JsonPropertyName("UpdateFrequency")]
-        public int UpdateFrequency { get; set; }
+        public int UpdateFrequency { get; }
 
         [JsonPropertyName("Locked")]
-        public bool Locked { get; set; }
+        public bool Locked { get; }
 
         [JsonPropertyName("Enabled")]
-        public bool Enabled { get; set; }
+        public bool Enabled { get; }
 
         [JsonPropertyName("MaxSpeed")]
-        public double MaxSpeed { get; set; }
+        public double MaxSpeed { get; }
 
         [JsonPropertyName("Standby")]
-        public bool Standby { get; set; }
+        public bool Standby { get; }
 
         [JsonPropertyName("Connected")]
-        public bool Connected { get; set; }
+        public bool Connected { get; }
 
         [JsonPropertyName("BatteryLevel")]
-        public double BatteryLevel { get; set; }
+        public double BatteryLevel { get; }
 
         [JsonPropertyName("Latitude")]
-        public double Latitude { get; set; }
+        public double Latitude { get; }
 
         [JsonPropertyName("Longitude")]
-        public double Longitude { get; set; }
+        public double Longitude { get; }
 
         [JsonPropertyName("Speed")]
-        public double Speed { get; set; }
+        public double Speed { get; }
 
-        public ScooterDigitalTwin()
+        public ScooterDigitalTwin(Guid id)
         {
+            Id = id.ToString();
             Connected = false;
             Locked = true;
             BatteryLevel = 0;
@@ -65,6 +66,11 @@ namespace EScooter.DigitalTwins.Commons
     public class ScooterDigitalTwinMetadata
     {
         [JsonPropertyName(DigitalTwinsJsonPropertyNames.MetadataModel)]
-        public string ModelId { get; set; }
+        public string ModelId { get; }
+
+        public ScooterDigitalTwinMetadata()
+        {
+            ModelId = "dtmi:com:escooter:EScooter;1";
+        }
     }
 }

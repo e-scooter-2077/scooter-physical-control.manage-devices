@@ -1,12 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Azure;
-using Azure.DigitalTwins.Core;
 using Azure.Identity;
-using EScooter.DigitalTwins.Commons;
-using Microsoft.Azure.Devices;
-using Microsoft.Azure.Devices.Common.Exceptions;
-using Microsoft.Azure.Devices.Shared;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -34,26 +28,19 @@ namespace EScooter.PhysicalControl.ManageDevices
         {
             var logger = context.GetLogger("Function");
             string iotHubString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
-            var registryManager = RegistryManager.CreateFromConnectionString(iotHubString);
-
             string digitalTwinUrl = "https://" + Environment.GetEnvironmentVariable("AzureDTHostname");
             var credential = new DefaultAzureCredential();
-            var digitalTwinsClient = new DigitalTwinsClient(new Uri(digitalTwinUrl), credential);
+
+            var dtManager = new DigitalTwinManager(new Uri(digitalTwinUrl), credential);
+            var iotHubManager = new IoTHubManager(iotHubString);
 
             var message = JsonConvert.DeserializeObject<ScooterCreated>(mySbMsg);
 
             // Add Digital Twin first
-            try
-            {
-                await DTUtils.AddDigitalTwin(message.Id, digitalTwinsClient);
-            }
-            catch (RequestFailedException e)
-            {
-                logger.LogError($"Create twin error: {e.Status}: {e.Message}");
-            }
+            await dtManager.AddDigitalTwin(message.Id);
 
             // Then add IoTHub Device
-            var (device, exists) = await IoTHubUtils.AddOrGetDeviceAsync(message.Id, registryManager);
+            var (device, exists) = await iotHubManager.AddOrGetDeviceAsync(message.Id);
             if (exists)
             {
                 logger.LogInformation($"Device with id {device.Id} already existing");
@@ -61,7 +48,7 @@ namespace EScooter.PhysicalControl.ManageDevices
             else
             {
                 logger.LogInformation($"New device registered with id {device.Id}");
-                var twin = await IoTHubUtils.SetDefaultProperties(message.Id, registryManager);
+                await iotHubManager.SetDefaultProperties(message.Id);
                 logger.LogInformation($"Update device twin default properties");
             }
         }
@@ -77,77 +64,17 @@ namespace EScooter.PhysicalControl.ManageDevices
         public static async Task RemoveDevice([ServiceBusTrigger("%TopicName%", "%RemoveSubscription%", Connection = "ServiceBusConnectionString")] string mySbMsg, FunctionContext context)
         {
             var logger = context.GetLogger("Function");
-            string connectionString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
-            var registryManager = RegistryManager.CreateFromConnectionString(connectionString);
-
+            string iotHubString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
             string digitalTwinUrl = "https://" + Environment.GetEnvironmentVariable("AzureDTHostname");
             var credential = new DefaultAzureCredential();
-            var digitalTwinsClient = new DigitalTwinsClient(new Uri(digitalTwinUrl), credential);
+
+            var dtManager = new DigitalTwinManager(new Uri(digitalTwinUrl), credential);
+            var iotHubManager = new IoTHubManager(iotHubString);
 
             var message = JsonConvert.DeserializeObject<ScooterCreated>(mySbMsg);
-            await DTUtils.RemoveDigitalTwin(message.Id, digitalTwinsClient);
-            try
-            {
-                await IoTHubUtils.RemoveDevice(message.Id, registryManager);
-                logger.LogInformation($"Device with id {message.Id} was removed");
-            }
-            catch (DeviceNotFoundException)
-            {
-                logger.LogInformation($"Device with id {message.Id} not found");
-            }
-        }
-    }
-
-    internal static class IoTHubUtils
-    {
-        public static async Task<(Device Device, bool Exists)> AddOrGetDeviceAsync(Guid id, RegistryManager registryManager)
-        {
-            Device device;
-            bool exists = false;
-            try
-            {
-                device = await registryManager.AddDeviceAsync(new Device(id.ToString()));
-            }
-            catch (DeviceAlreadyExistsException)
-            {
-                device = await registryManager.GetDeviceAsync(id.ToString());
-                exists = true;
-            }
-
-            return (device, exists);
-        }
-
-        public static async Task RemoveDevice(Guid id, RegistryManager registryManager)
-        {
-            await registryManager.RemoveDeviceAsync(id.ToString());
-        }
-
-        public static async Task<Twin> SetDefaultProperties(Guid id, RegistryManager registryManager)
-        {
-            var twin = await registryManager.GetTwinAsync(id.ToString());
-            var patch =
-                @"{
-                    tags: {
-                        type: 'EScooter'
-                    }
-                }";
-            return await registryManager.UpdateTwinAsync(twin.DeviceId, patch, twin.ETag);
-        }
-    }
-
-    internal static class DTUtils
-    {
-        public static async Task AddDigitalTwin(Guid id, DigitalTwinsClient digitalTwinsClient)
-        {
-            var twinData = new ScooterDigitalTwin();
-            twinData.Id = id.ToString();
-            twinData.Metadata.ModelId = "dtmi:com:escooter:EScooter;1";
-            await digitalTwinsClient.CreateOrReplaceDigitalTwinAsync(twinData.Id, twinData);
-        }
-
-        public static async Task RemoveDigitalTwin(Guid id, DigitalTwinsClient digitalTwinsClient)
-        {
-            await digitalTwinsClient.DeleteDigitalTwinAsync(id.ToString());
+            await dtManager.RemoveDigitalTwin(message.Id);
+            await iotHubManager.RemoveDevice(message.Id);
+            logger.LogInformation($"Device with id {message.Id} was removed");
         }
     }
 }
