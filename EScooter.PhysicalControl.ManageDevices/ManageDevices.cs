@@ -1,4 +1,5 @@
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
@@ -17,8 +18,9 @@ namespace EScooter.PhysicalControl.ManageDevices
     /// </summary>
     public static class ManageDevices
     {
-        private static DigitalTwinManager _dtManager = DigitalTwinManager.InstantiateDigitalTwinManager();
-        private static IoTHubManager _iotHubManager = IoTHubManager.InstantiateIoTHubManager();
+        private static readonly HttpClient _httpClient = new HttpClient();
+        private static readonly DigitalTwinManager _dtManager = DigitalTwinManager.InstantiateDigitalTwinManager(_httpClient);
+        private static readonly IoTHubManager _iotHubManager = IoTHubManager.InstantiateIoTHubManager();
 
         /// <summary>
         /// When triggered, adds a device to the IoT hub with the given Id and default properties.

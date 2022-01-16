@@ -1,11 +1,9 @@
 ﻿using Azure.Core;
+using Azure.Core.Pipeline;
 using Azure.DigitalTwins.Core;
 using Azure.Identity;
 using EScooter.DigitalTwins.Commons;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace EScooter.PhysicalControl.ManageDevices
@@ -14,17 +12,18 @@ namespace EScooter.PhysicalControl.ManageDevices
     {
         private readonly DigitalTwinsClient _dtClient;
 
-        public static DigitalTwinManager InstantiateDigitalTwinManager()
+        public static DigitalTwinManager InstantiateDigitalTwinManager(System.Net.Http.HttpClient httpClient)
         {
             string dtUrl = "https://" + Environment.GetEnvironmentVariable("AzureDTHostname");
             TokenCredential credentials = new DefaultAzureCredential();
-            DigitalTwinManager dtManager = new DigitalTwinManager(new Uri(dtUrl), credentials);
+            DigitalTwinManager dtManager = new DigitalTwinManager(new Uri(dtUrl), credentials, new DigitalTwinsClientOptions
+            { Transport = new HttpClientTransport(httpClient) });
             return dtManager;
         }
 
-        public DigitalTwinManager(Uri uri, Azure.Core.TokenCredential token)
+        public DigitalTwinManager(Uri uri, Azure.Core.TokenCredential token, DigitalTwinsClientOptions digitalTwinsClientOptions)
         {
-            _dtClient = new DigitalTwinsClient(uri, token);
+            _dtClient = new DigitalTwinsClient(uri, token, digitalTwinsClientOptions);
         }
 
         public async Task AddDigitalTwin(Guid id)
