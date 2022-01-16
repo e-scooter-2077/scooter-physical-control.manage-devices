@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Azure.Core;
 using Azure.Identity;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
@@ -16,6 +17,13 @@ namespace EScooter.PhysicalControl.ManageDevices
     /// </summary>
     public static class ManageDevices
     {
+        private static string _digitalTwinUrl = "https://" + Environment.GetEnvironmentVariable("AzureDTHostname");
+        private static TokenCredential _credential = new DefaultAzureCredential();
+        private static DigitalTwinManager _dtManager = new DigitalTwinManager(new Uri(_digitalTwinUrl), _credential);
+
+        private static string _iotHubString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
+        private static IoTHubManager _iotHubManager = new IoTHubManager(_iotHubString);
+
         /// <summary>
         /// When triggered, adds a device to the IoT hub with the given Id and default properties.
         /// If the Id is already in use it does nothing.
@@ -27,20 +35,13 @@ namespace EScooter.PhysicalControl.ManageDevices
         public static async Task AddDevice([ServiceBusTrigger("%TopicName%", "%AddSubscription%", Connection = "ServiceBusConnectionString")] string mySbMsg, FunctionContext context)
         {
             var logger = context.GetLogger("Function");
-            string iotHubString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
-            string digitalTwinUrl = "https://" + Environment.GetEnvironmentVariable("AzureDTHostname");
-            var credential = new DefaultAzureCredential();
-
-            var dtManager = new DigitalTwinManager(new Uri(digitalTwinUrl), credential);
-            var iotHubManager = new IoTHubManager(iotHubString);
-
             var message = JsonConvert.DeserializeObject<ScooterCreated>(mySbMsg);
 
             // Add Digital Twin first
-            await dtManager.AddDigitalTwin(message.Id);
+            await _dtManager.AddDigitalTwin(message.Id);
 
             // Then add IoTHub Device
-            var (device, exists) = await iotHubManager.AddOrGetDeviceAsync(message.Id);
+            var (device, exists) = await _iotHubManager.AddOrGetDeviceAsync(message.Id);
             if (exists)
             {
                 logger.LogInformation($"Device with id {device.Id} already existing");
@@ -48,7 +49,7 @@ namespace EScooter.PhysicalControl.ManageDevices
             else
             {
                 logger.LogInformation($"New device registered with id {device.Id}");
-                await iotHubManager.SetDefaultProperties(message.Id);
+                await _iotHubManager.SetDefaultProperties(message.Id);
                 logger.LogInformation($"Update device twin default properties");
             }
         }
@@ -64,16 +65,10 @@ namespace EScooter.PhysicalControl.ManageDevices
         public static async Task RemoveDevice([ServiceBusTrigger("%TopicName%", "%RemoveSubscription%", Connection = "ServiceBusConnectionString")] string mySbMsg, FunctionContext context)
         {
             var logger = context.GetLogger("Function");
-            string iotHubString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
-            string digitalTwinUrl = "https://" + Environment.GetEnvironmentVariable("AzureDTHostname");
-            var credential = new DefaultAzureCredential();
-
-            var dtManager = new DigitalTwinManager(new Uri(digitalTwinUrl), credential);
-            var iotHubManager = new IoTHubManager(iotHubString);
 
             var message = JsonConvert.DeserializeObject<ScooterCreated>(mySbMsg);
-            await dtManager.RemoveDigitalTwin(message.Id);
-            await iotHubManager.RemoveDevice(message.Id);
+            await _dtManager.RemoveDigitalTwin(message.Id);
+            await _iotHubManager.RemoveDevice(message.Id);
             logger.LogInformation($"Device with id {message.Id} was removed");
         }
     }
