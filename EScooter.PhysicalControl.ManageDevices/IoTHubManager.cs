@@ -10,6 +10,13 @@ namespace EScooter.PhysicalControl.ManageDevices
     {
         private readonly RegistryManager _registryManager;
 
+        public static IoTHubManager InstantiateIoTHubManager()
+        {
+            string iotHubString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
+            IoTHubManager iotHubManager = new IoTHubManager(iotHubString);
+            return iotHubManager;
+        }
+
         public IoTHubManager(string connectionString)
         {
             _registryManager = RegistryManager.CreateFromConnectionString(connectionString);

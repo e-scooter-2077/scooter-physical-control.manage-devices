@@ -17,12 +17,8 @@ namespace EScooter.PhysicalControl.ManageDevices
     /// </summary>
     public static class ManageDevices
     {
-        private static string _digitalTwinUrl = "https://" + Environment.GetEnvironmentVariable("AzureDTHostname");
-        private static TokenCredential _credential = new DefaultAzureCredential();
-        private static DigitalTwinManager _dtManager = new DigitalTwinManager(new Uri(_digitalTwinUrl), _credential);
-
-        private static string _iotHubString = Environment.GetEnvironmentVariable("HubRegistryConnectionString");
-        private static IoTHubManager _iotHubManager = new IoTHubManager(_iotHubString);
+        private static DigitalTwinManager _dtManager = DigitalTwinManager.InstantiateDigitalTwinManager();
+        private static IoTHubManager _iotHubManager = IoTHubManager.InstantiateIoTHubManager();
 
         /// <summary>
         /// When triggered, adds a device to the IoT hub with the given Id and default properties.
